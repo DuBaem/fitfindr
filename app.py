@@ -44,7 +44,33 @@ def handle_query(user_query: str, wardrobe_choice: str) -> tuple[str, str, str]:
            session["fit_card"].
     """
     # TODO: implement this function
-    return "Agent not yet implemented.", "", ""
+    # return "Agent not yet implemented.", "", ""
+    # 1. Guard against an empty query (return early with an error message).
+    if not user_query or not user_query.strip():
+        return ("Please enter a search query.", "", "")
+
+    # 2. Wardrobe selection
+    wardrobe = get_example_wardrobe() if wardrobe_choice == "Example wardrobe" else get_empty_wardrobe()
+
+    # 3. Run the agent
+    session = run_agent(user_query, wardrobe)
+
+    # 4. Error handling: surface agent errors cleanly to the UI
+    if session.get("error") is not None:
+        return (session["error"], "", "")
+
+    # 5. Format the selected listing into a readable string
+    item = session["selected_item"]
+    formatted_listing = (
+        f"Title:       {item.get('title', 'N/A')}\n"
+        f"Price:       ${item.get('price', 'N/A')}\n"
+        f"Platform:    {item.get('platform', 'N/A')}\n"
+        f"Condition:   {item.get('condition', 'N/A')}\n"
+        f"Description: {item.get('description', 'N/A')}"
+    )
+
+    # 6. Return all three panels
+    return (formatted_listing, session["outfit_suggestion"], session["fit_card"])
 
 
 # ── interface ─────────────────────────────────────────────────────────────────
