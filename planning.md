@@ -1,16 +1,5 @@
 # FitFindr — planning.md
-
-> Complete this document before writing any implementation code.
-> Your spec and agent diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
-> Your planning.md will be reviewed as part of your submission.
-> Update it before starting any stretch features.
-
----
-
 ## Tools
-
-List every tool your agent will use. For each tool, fill in all four fields.
-You must have at least 3 tools. The three required tools are listed — add any additional tools below them.
 
 ### Tool 1: search_listings
 
@@ -84,21 +73,17 @@ If the outfit input is an empty string, the tool catches the error and returns a
 
 ## Planning Loop
 
-**How does your agent decide which tool to call next?**
-<!-- Describe the logic your planning loop uses. What does it look at? What conditions change its behavior? How does it know when it's done? -->
+**How my agent decides which tool to call next:**
 After search_listings runs, the loop explicitly checks if the returned list is empty. If yes, it sets an error message in session["error"] and breaks the loop early, returning to the user. If no, it sets session["selected_item"] = results[0] and proceeds to call suggest_outfit. It then directly passes the output of suggest_outfit into create_fit_card.
 
 ## State Management
 
-**How does information from one tool get passed to the next?**
-<!-- Describe how your agent stores and accesses state within a session. What data is tracked? How is it passed between tool calls? -->
+**How information from one tool gets passed to the next:**
 The agent uses a centralized dictionary called session. It stores the output of Tool 1 in session["selected_item"], which is read by Tool 2 and Tool 3. Tool 2's output is saved to session["outfit_suggestion"], which is read by Tool 3. Tool 3 saves to session["fit_card"].
 
 ---
 
 ## Error Handling
-
-For each tool, describe the specific failure mode you're handling and what the agent does in response.
 
 | Tool | Failure mode | Agent response |
 |------|-------------|----------------|
@@ -110,52 +95,36 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 ## Architecture
 
-<!-- Draw a diagram of your agent showing how the components connect:
-     User input → Planning Loop → Tools (search_listings, suggest_outfit, create_fit_card)
-                                                                          ↕
-                                                                   State / Session
-     Show what triggers each tool, how state flows between them, and where error paths branch off.
-     ASCII art, a Mermaid diagram (https://mermaid.js.org/syntax/flowchart.html), or an embedded
-     sketch are all fine. You'll share this diagram with an AI tool when asking it to implement
-     the planning loop and each individual tool. -->
-
+```text
 User query
-    │
-    ▼
-Planning Loop ────────────────────────────────────────────────────────┐
-    │                                                                 │
-    ├─► search_listings(description, size, max_price)                 │
-    │       │ results=[]                                              │
-    │       ├──► [ERROR] set session["error"] → return early          │
-    │       │                                                         │
-    │       │ results=[item, ...]                                     │
-    │       ▼                                                         │
-    │   Session: selected_item = results[0]                           │
-    │       │                                                         │
-    ├─► suggest_outfit(selected_item, wardrobe)                       │
-    │       │                                                         │
-    │   Session: outfit_suggestion = "..."                            │
-    │       │                                                         │
-    └─► create_fit_card(outfit_suggestion, selected_item)             │
-            │                                                         │
-        Session: fit_card = "..."                                     │
-            │                                                         └─ error path returns here
-            ▼
-        Return session to UI
-
+    |
+    v
+Planning Loop --------------------------------------------------------+
+    |                                                                |
+    +--> search_listings(description, size, max_price)               |
+    |       |                                                        |
+    |       +--> results=[]                                          |
+    |       |      +--> [ERROR] set session["error"] -> return early |
+    |       |                                                        |
+    |       +--> results=[item, ...]                                 |
+    |              |                                                 |
+    |              +--> Session: selected_item = results[0]          |
+    |                                                                |
+    +--> suggest_outfit(selected_item, wardrobe)                     |
+    |       |                                                        |
+    |       +--> Session: outfit_suggestion = "..."                  |
+    |                                                                |
+    +--> create_fit_card(outfit_suggestion, selected_item)           |
+    |       |                                                        |
+    |       +--> Session: fit_card = "..."                           |
+    |                                                                |
+    +------------------------------------------------> error path returns here
+    |
+    v
+Return session to UI
+```
 
 ## AI Tool Plan
-
-<!-- For each part of the implementation below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, your agent diagram)
-     - What you expect it to produce
-     - How you'll verify the output matches your spec before moving on
-
-     "I'll use AI to help me code" is not a plan.
-     "I'll give Claude my Tool 1 spec (inputs, return value, failure mode) and ask it to implement
-     search_listings() using load_listings() from the data loader — then test it against 3 queries
-     before trusting it" is a plan. -->
 
 **Milestone 3 — Individual tool implementations:**
 I'll use Claude to help me write the functions in `tools.py`. For `search_listings`, I'll give Gemini the Tool 1 spec block from this document (inputs, return value, failure mode) and ask it to implement the function using `load_listings()` from the data loader — then I'll write and run a `pytest` check against an impossible query to verify it returns an empty list before trusting it. I will repeat this exact process using the specific spec blocks for `suggest_outfit` and `create_fit_card`.
